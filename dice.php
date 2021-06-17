@@ -110,6 +110,10 @@ function handle_dice_string($s): array
                     $state = $state_initial;
                     array_push($result, dice_mdn($current_m, $current_n));
                     array_push($result_dn, "d{$current_n}");
+                } else if ($state === $state_m) {
+                    $state = $state_initial;
+                    array_push($result, array($current_m));
+                    array_push($result_dn, "$current_m");
                 } else {
                     $state = $state_error;
                 }
@@ -119,14 +123,17 @@ function handle_dice_string($s): array
     }
 
     // now we are at eof
+    if ($current_m > $m_max or $current_n > $n_max) {
+        $state = $state_error;
+    }
     if ($state === $state_n) {
-        if ($current_m > $m_max or $current_n > $n_max) {
-            $state = $state_error;
-        } else {
-            array_push($result, dice_mdn($current_m, $current_n));
-            array_push($result_dn, "d{$current_n}");
-            $state = $state_eof;
-        }
+        array_push($result, dice_mdn($current_m, $current_n));
+        array_push($result_dn, "d{$current_n}");
+        $state = $state_eof;
+    } else if ($state === $state_m) {
+        array_push($result, array($current_m));
+        array_push($result_dn, "$current_m");
+        $state = $state_eof;
     } else {
         $state = $state_error;
     }
@@ -150,7 +157,11 @@ function content_replace_helper_dice($s): string
     $number_sum = 0;
     for ($i = 0; $i < count($dn); ++$i) {
         for ($j = 0; $j < count($dn_number[$i]); ++$j) {
-            $output_td .= "{$dn[$i]}({$dn_number[$i][$j]})+";
+            if ($dn[$i][0] === 'd') {
+                $output_td .= "{$dn[$i]}({$dn_number[$i][$j]})+";
+            } else {
+                $output_td .= "{$dn[$i]}+";
+            }
             $number_sum += $dn_number[$i][$j];
         }
     }
@@ -217,6 +228,6 @@ function handle_content_replace($content, $pattern_begin, $pattern_end, $helper_
     return $modified_content;
 }
 
-print(handle_content_replace('1[dice]d100[/dice]1456[dice]d100[/dice]123[dice]2d100[/dice][dice]20d1000[/dice]', '[dice]', '[/dice]', function ($s) {
+print(handle_content_replace('我是文字e]1+d100[/dice]1测试6[dice]1d20+10+21[/dice]123[dice]1+1[/dice][dice]3d10+2d6+2[/dice]23232', '[dice]', '[/dice]', function ($s) {
     return content_replace_helper_dice($s);
 }));
