@@ -61,7 +61,7 @@ function handle_dice_string($s): array
 
     $state = $state_initial;
 
-    for ($i = 0; $i < strlen($s); ++$i) {
+    for ($i = 0; $i < strlen($s) and $state != $state_error; ++$i) {
         switch ($s[$i]) {
             case '0':
             case '1':
@@ -119,6 +119,10 @@ function handle_dice_string($s): array
                 }
                 break;
             }
+            default:
+            {
+                $state = $state_error;
+            }
         }
     }
 
@@ -146,6 +150,7 @@ function handle_dice_string($s): array
 
 function content_replace_helper_dice($s): string
 {
+    $s = str_replace(' ', '', $s);
     $result = handle_dice_string($s);
     $dn = $result[0];
     $dn_number = $result[1];
@@ -166,7 +171,7 @@ function content_replace_helper_dice($s): string
         }
     }
     $output_td = substr($output_td, 0, -1);
-    return "<div><table><tbody><tr><td><b>ROLL : {$s}</b>={$output_td}=<b>{$number_sum}</b></td></tr></tbody></table></div>";
+    return "<div class='bbcode_dice_div'><table class='bbcode_dice_table'><tbody class='bbcode_dice_tb'><tr class='bbcode_dice_tr'><td class='bbcode_dice_td'><b class='bbcode_dice_roll_b'>ROLL : {$s}</b><span class='bbcode_dice_roll_equ_span'>=</span><span class='bbcode_dice_roll_span'>{$output_td}</span><span class='bbcode_dice_roll_equ_span'>=</span><b class='bbcode_dice_roll_result_b'>{$number_sum}</b></td></tr></tbody></table></div>";
 }
 
 
@@ -228,6 +233,6 @@ function handle_content_replace($content, $pattern_begin, $pattern_end, $helper_
     return $modified_content;
 }
 
-print(handle_content_replace('我是文字e]1+d100[/dice]1测试6[dice]1d20+10+21[/dice]123[dice]1+1[/dice][dice]3d10+2d6+2[/dice]23232', '[dice]', '[/dice]', function ($s) {
+print(handle_content_replace('我是文字e]1 + d100[/dice]1测试6[dice]1d20 +1 0+2 1 [/dice]123[dice]1+1[/dice][dice]3d10+2d6+2[/dice]23232', '[dice]', '[/dice]', function ($s) {
     return content_replace_helper_dice($s);
 }));
